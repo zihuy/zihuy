@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="id">
+    <head>
+        <meta charset="UTF_8">
+        <title>Pixel zone - Dunia Retro</title>
+        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+        <style>
+            body {
+                background-color: #11111b;
+                font-family: 'Press Start 2P', cursive;
+                color: #fff;
+                padding: 30px;
+                text-align: center;
+                line-height: 1.8;
+            }
+
+            .nav-kembali {
+                color: #00ffcc;
+                text-decoration: none;
+                font-size: 12px;
+                display: inline-block;
+                margin-bottom: 30px;
+            }
+
+            .nav-kembali:hover {
+                color: #ff007f;
+                text-shadow: 2px 2px #000;
+            }
+
+            h1 {
+                color: #ff007f;
+                font-size: 24px;
+                text-shadow: 4px 4px #000;
+                margin-bottom: 20px;
+            }
+
+            .pixel-box {
+                background-color: #22223b;
+                border: 4px solid #fff;
+                padding: 20px;
+                max-width: 600px;
+                margin: 20px auto;
+                box-shadow: 8px 8px 0px #000;
+                text-align: left;
+                font-size: 11px;
+            }
+
+            .pixel-box h3 {
+                color: #00ffcc;
+                margin-top: 0;
+                text-shadow: 2px 2px #000;
+            }
+
+            .info-skor {
+                font-size: 14px;
+                color: #00ffcc;
+                margin-bottom: 15px;
+            }
+
+            /* TOMBOL KONTROL */
+            .btn-kontrol {
+                display: inline-block;
+                background-color: #00ffcc;
+                color: #000;
+                padding: 12px 24px;
+                font-size: 12px;
+                font-family: 'Press Start 2P', cursive;
+                border: 4px solid #fff;
+                box-shadow: 4px 4px 0px #000;
+                cursor: pointer;
+                margin-bottom: 15px;
+                font-weight: bold;
+            }
+
+            .btn-kontrol:hover {
+                background-color: #ff007f;
+                color: #fff;
+                box-shadow: 2px 2px 0px #000;
+                transform: translate(2px, 2px);
+            }
+
+            #gameCanvas {
+                background-color: #1e1e2e;
+                border: 6px solid #fff;
+                box-shadow: 8px 8px 0px #000;
+                display: block;
+                margin: 0 auto;
+            }
+
+            ul {
+                list-style-type: "▶ ";
+                padding-left: 20px;
+            }
+
+            li {
+                margin-bottom: 10px;
+            }
+        </style>
+    </head>
+
+    <body>
+         <a href="index.html" class="nav-kembali">&lt; KEMBALI KE HOME</a>
+
+         <h1>PIXEL GAME ZONE</h1>
+
+         <div class="pixel-box">
+            <h3>[PROFIL REBORN]</h3>
+            <p>Selamat datang di zona 8Bit, Izzi! Di halaman ini, semua elemen dipaksa menjadi kotak kaku agar terasa seperti di dalam game jadul.</p>
+         </div>
+
+         <div class="pixel-box">
+            <h3>[KEMAMPUAN CODING]</h3>
+            <ul>
+                <li>BISA BIKIN TABEL</li>
+                <li>BISA EFEK KACA DAN PIKSEL</li>
+                <li>BISA MANGGIL BUNGA SAKURA</li>
+            </ul>
+         </div>
+
+         <h2>SNAKE 8-BIT</h2>
+         <div class="info-skor">SKOR: <span id="skorTeks">0</span></div>
+
+         <!-- TOMBOL UTAMA START / PAUSE -->
+         <button class="btn-kontrol" id="btnMulai" onclick="tekanTombolUtama()">START GAME</button>
+
+         <!-- Tempat Game Digambar -->
+         <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+         <div class="pixel-box" style="text-align: center;">
+             <p>[ PANDUAN ]</p>
+             <p>Klik <b>START GAME</b> untuk bermain. Gunakan tombol PANAH untuk belok. Tekan tombol <b>SPASI</b> untuk Jeda/Pause Game!</p>
+         </div>
+
+         <script>
+            const canvas = document.getElementById("gameCanvas");
+            const ctx = canvas.getContext("2d");
+
+            const ukuranKotak = 20;
+            let ular;
+            let makanan = { x: 0, y: 0 };
+            let dx;
+            let dy;
+            let skor;
+            
+            // Status Game: 'belum_mulai', 'berjalan', 'jeda'
+            let statusGame = 'belum_mulai'; 
+
+            document.addEventListener("keydown", gantiArah);
+
+            // Tampilan awal saat halaman dibuka (Layar Game Standby)
+            resetDataGame();
+            tampilkanLayarStandby("TEKAN START");
+
+            function resetDataGame() {
+                ular = [{ x: 160, y: 160 }];
+                dx = ukuranKotak;
+                dy = 0;
+                skor = 0;
+                document.getElementById("skorTeks").innerText = skor;
+                taruhMakanan();
+            }
+
+            function mainkanGame() {
+                if (statusGame === 'belum_mulai') return;
+
+                if (cekGameSelesai()) {
+                    alert("GAME OVER! Skor Akhir Kamu: " + skor);
+                    statusGame = 'belum_mulai';
+                    document.getElementById("btnMulai").innerText = "START GAME";
+                    document.getElementById("btnMulai").style.backgroundColor = "#00ffcc";
+                    document.getElementById("btnMulai").style.color = "#000";
+                    resetDataGame();
+                    tampilkanLayarStandby("GAME OVER");
+                    return;
+                }
+
+                setTimeout(function() {
+                    if (statusGame === 'berjalan') {
+                        bersihkanCanvas();
+                        gambarMakanan();
+                        gerakkanUlar();
+                        gambarUlar();
+                    } else if (statusGame === 'jeda') {
+                        tampilkanLayarStandby("GAME PAUSED");
+                    }
+                    mainkanGame();
+                }, 100);
+            }
+
+            function bersihkanCanvas() {
+                ctx.fillStyle = "#1e1e2e";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            function gambarUlar() {
+                ular.forEach((bagian, indeks) => {
+                    ctx.fillStyle = indeks === 0 ? "#00ffcc" : "#a6e3a1";
+                    ctx.fillRect(bagian.x, bagian.y, ukuranKotak, ukuranKotak);
+                    ctx.strokeStyle = "#1e1e2e";
+                    ctx.strokeRect(bagian.x, bagian.y, ukuranKotak, ukuranKotak);
+                });
+            }
+
+            function gerakkanUlar() {
+                const kepalaBaru = { x: ular[0].x + dx, y: ular[0].y + dy };
+                ular.unshift(kepalaBaru);
+
+                if (ular[0].x === makanan.x && ular[0].y === makanan.y) {
+                    skor += 10;
+                    document.getElementById("skorTeks").innerText = skor;
+                    taruhMakanan();
+                } else {
+                    ular.pop();
+                }
+            }
+
+            // Fungsi Logika Tombol Klik
+            function tekanTombolUtama() {
+                const btn = document.getElementById("btnMulai");
+                
+                if (statusGame === 'belum_mulai') {
+                    statusGame = 'berjalan';
+                    btn.innerText = "PAUSE GAME";
+                    btn.style.backgroundColor = "#ff007f";
+                    btn.style.color = "#fff";
+                    mainkanGame();
+                } else if (statusGame === 'berjalan') {
+                    statusGame = 'jeda';
+                    btn.innerText = "MULAI (RESUME)";
+                    btn.style.backgroundColor = "#00ffcc";
+                    btn.style.color = "#000";
+                } else if (statusGame === 'jeda') {
+                    statusGame = 'berjalan';
+                    btn.innerText = "PAUSE GAME";
+                    btn.style.backgroundColor = "#ff007f";
+                    btn.style.color = "#fff";
+                }
+            }
+
+            function tampilkanLayarStandby(teks) {
+                bersihkanCanvas();
+                ctx.fillStyle = "rgba(30, 30, 46, 0.6)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#fff";
+                ctx.font = "14px 'Press Start 2P'";
+                ctx.textAlign = "center";
+                ctx.fillText(teks, canvas.width / 2, canvas.height / 2);
+            }
+
+            function gantiArah(event) {
+                const KUNCI_KIRI = 37;
+                const KUNCI_ATAS = 38;
+                const KUNCI_KANAN = 39;
+                const KUNCI_BAWAH = 40;
+                const KUNCI_SPASI = 32;
+
+                const arahPencet = event.keyCode;
+
+                // Tombol spasi bisa untuk pause / resume
+                if (arahPencet === KUNCI_SPASI) {
+                    event.preventDefault();
+                    if (statusGame !== 'belum_mulai') {
+                        tekanTombolUtama();
+                    }
+                    return;
+                }
+
+                // Jangan gerakkan ular jika game belum di-start atau sedang di-pause
+                if (statusGame !== 'berjalan') return;
+
+                const keAtas = (dy === -ukuranKotak);
+                const keBawah = (dy === ukuranKotak);
+                const keKanan = (dx === ukuranKotak);
+                const keKiri = (dx === -ukuranKotak);
+
+                if (arahPencet === KUNCI_KIRI && !keKanan) { dx = -ukuranKotak; dy = 0; }
+                if (arahPencet === KUNCI_ATAS && !keBawah) { dx = 0; dy = -ukuranKotak; }
+                if (arahPencet === KUNCI_KANAN && !keKiri) { dx = ukuranKotak; dy = 0; }
+                if (arahPencet === KUNCI_BAWAH && !keAtas) { dx = 0; dy = ukuranKotak; }
+            }
+
+            function taruhMakanan() {
+                makanan.x = Math.floor(Math.random() * (canvas.width / ukuranKotak)) * ukuranKotak;
+                makanan.y = Math.floor(Math.random() * (canvas.height / ukuranKotak)) * ukuranKotak;
+            }
+
+            function gambarMakanan() {
+                ctx.fillStyle = "#ff007f";
+                ctx.fillRect(makanan.x, makanan.y, ukuranKotak, ukuranKotak);
+            }
+
+            function cekGameSelesai() {
+                for (let i = 4; i < ular.length; i++) {
+                    if (ular[i].x === ular[0].x && ular[i].y === ular[0].y) return true;
+                }
+                const nabrakKiri = ular[0].x < 0;
+                const nabrakKanan = ular[0].x >= canvas.width;
+                const nabrakAtas = ular[0].y < 0;
+                const nabrakBawah = ular[0].y >= canvas.height;
+                return nabrakKiri || nabrakKanan || nabrakAtas || nabrakBawah;
+            }
+         </script>
+    </body>
+</html>
